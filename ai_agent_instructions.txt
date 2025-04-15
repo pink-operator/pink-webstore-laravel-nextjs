@@ -1,0 +1,123 @@
+E-Commerce API – MVP Specification
+This is a minimal viable product (MVP) plan for an E-Commerce API project built using Laravel. The goal is to develop a backend for a basic e-commerce platform with support for product management, customer handling, order processing, and payments.
+
+🧰 Development Environment
+Device: MacBook Pro
+
+IDE: Visual Studio Code
+
+Framework: Laravel (PHP)
+
+Database: MySQL (or any Laravel-compatible DB)
+
+📋 Evaluation Tasks
+✅ Task 1: Database Design
+Description:
+Design a relational schema to support the following entities:
+
+Users (Customers & Admins)
+
+Products
+
+Orders
+
+Order Items (Handles multiple products per order)
+
+Requirements:
+Use Laravel migrations to define schema.
+
+Set up relationships:
+
+Each order is placed by one customer.
+
+Each order can have multiple products (via order_items).
+
+Example fields:
+
+Products: id, name, description, price, stock_quantity, created_at, updated_at
+
+Orders: id, user_id, total_price, status, created_at, updated_at
+
+Order Items: id, order_id, product_id, quantity, price
+
+🔐 Task 2: User Authentication & Role Management
+Features:
+User authentication using Laravel Sanctum or Passport
+
+Role-based access:
+
+Admin: Manage products, view all orders
+
+Customer: Browse products, place orders, view their own order history
+
+Requirements:
+Use middleware to protect admin routes.
+
+Customers can only access their own data.
+
+📦 Task 3: Product Management API
+Features:
+CRUD operations for products (Admin only)
+
+Product search and filter by:
+
+Price range
+
+Stock availability
+
+Requirements:
+Validate all inputs
+
+Update stock quantity when an order is placed
+
+📑 Task 4: Order Management API
+Features:
+Create Orders:
+
+Add multiple products
+
+Calculate total price
+
+Reduce stock quantity accordingly
+
+View Orders:
+
+Customers can view their own orders
+
+Update Order Status (Admin only)
+
+Additional Requirements:
+Support order statuses: Pending, Processing, Completed, Cancelled
+
+Prevent ordering if stock is insufficient
+
+🧪 Task 5: Testing
+Tests to Include:
+Unit tests for core features (e.g. product CRUD, order creation)
+
+Integration tests covering:
+
+Order creation
+
+Stock updates
+
+Payment simulation
+
+Tools:
+Use PHPUnit (Laravel's default testing framework)
+
+🧼 Task 6: Code Quality & Documentation
+Requirements:
+Adhere to PSR-12 coding standards
+
+Document APIs using:
+
+Inline comments
+
+Tools like Swagger/OpenAPI
+
+Include a README.md with:
+
+Setup instructions
+
+API structure and endpoint explanations
