@@ -15,9 +15,9 @@ A Laravel-based RESTful API for an e-commerce platform with product management, 
 - go to project root: **php artisan serve** - should start at http://127.0.0.1:8000
 - got to /frontend inside the project root: **npm run dev** - should start at http://localhost:3000
 - run migrations: **php artisan migrate**
-- run seeders: **php artisan db:seed **
+- run seeders: **php artisan db:seed**
 - the .env.example is the exact same as my own
-
+- run the tests: **php artisan test**
 ## Project Structure
 
 ### Controllers
@@ -114,21 +114,6 @@ PHPUnit tests covering:
 - Proxy support for API requests
 - Session handling for SPA authentication
 
-### Rate Limit Headers
-
-The API includes rate limit information in response headers:
-- `X-RateLimit-Limit`: Maximum number of requests per window
-- `X-RateLimit-Remaining`: Number of requests remaining in current window
-- `X-RateLimit-Reset`: Timestamp when the rate limit window resets
-
 ## Development
-
-To regenerate the API documentation:
-
-```bash
-php artisan l5-swagger:generate
-```
-
-The documentation will be generated in the `storage/api-docs` directory.
 
 we are using postgresql, and php artisan (no brew)
