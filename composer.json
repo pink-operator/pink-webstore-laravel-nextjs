@@ -1,6 +1,6 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "pink-webstore-app",
+    "name": "pink-operator/pink-webstore-app",
     "type": "project",
     "description": "A Laravel API-based webstore application",
     "keywords": [
