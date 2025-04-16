@@ -25,8 +25,9 @@ class OrderResource extends JsonResource
         return [
             'id' => $this->id,
             'user_id' => $this->user_id,
-            'total' => (float) $this->total,
+            'user' => new UserResource($this->whenLoaded('user')),
             'status' => $this->status,
+            'total' => (float) $this->total_price,
             'items' => OrderItemResource::collection($this->whenLoaded('items')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

@@ -7,7 +7,9 @@ use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Str;
 use OpenApi\Attributes as OA;
 
 #[OA\Tag(
@@ -37,11 +39,7 @@ class CategoryController extends Controller
      */
     public function index(): AnonymousResourceCollection
     {
-        $categories = Category::withCount('products')
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->get();
-
+        $categories = Category::paginate(10);
         return CategoryResource::collection($categories);
     }
 
@@ -66,9 +64,22 @@ class CategoryController extends Controller
      *     )
      * )
      */
-    public function store(StoreCategoryRequest $request): CategoryResource
+    public function store(Request $request): CategoryResource
     {
-        $category = Category::create($request->validated());
+        // Check if the user is an admin
+        if (!$request->user()->isAdmin()) {
+            abort(403, 'Unauthorized - Admin access required');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:categories',
+            'description' => 'nullable|string',
+        ]);
+
+        $validated['slug'] = Str::slug($validated['name']);
+
+        $category = Category::create($validated);
+
         return new CategoryResource($category);
     }
 
@@ -95,8 +106,12 @@ class CategoryController extends Controller
      *     )
      * )
      */
-    public function show(Category $category): CategoryResource
+    public function show(Request $request, Category $category): CategoryResource
     {
+        if ($request->has('include') && $request->include === 'products') {
+            $category->load('products');
+        }
+        
         return new CategoryResource($category);
     }
 
@@ -132,9 +147,24 @@ class CategoryController extends Controller
      *     )
      * )
      */
-    public function update(UpdateCategoryRequest $request, Category $category): CategoryResource
+    public function update(Request $request, Category $category): CategoryResource
     {
-        $category->update($request->validated());
+        // Check if the user is an admin
+        if (!$request->user()->isAdmin()) {
+            abort(403, 'Unauthorized - Admin access required');
+        }
+
+        $validated = $request->validate([
+            'name' => 'sometimes|string|max:255|unique:categories,name,' . $category->id,
+            'description' => 'nullable|string',
+        ]);
+
+        if (isset($validated['name'])) {
+            $validated['slug'] = Str::slug($validated['name']);
+        }
+
+        $category->update($validated);
+
         return new CategoryResource($category);
     }
 
@@ -165,9 +195,21 @@ class CategoryController extends Controller
      *     )
      * )
      */
-    public function destroy(Category $category)
+    public function destroy(Request $request, Category $category)
     {
+        // Check if the user is an admin
+        if (!$request->user()->isAdmin()) {
+            abort(403, 'Unauthorized - Admin access required');
+        }
+        
+        // Check if category has products
+        if ($category->products()->exists()) {
+            return response()->json([
+                'message' => 'Cannot delete category with associated products'
+            ], 422);
+        }
+        
         $category->delete();
-        return response()->noContent();
+        return response()->json(['message' => 'Category deleted successfully'], 200);
     }
 }

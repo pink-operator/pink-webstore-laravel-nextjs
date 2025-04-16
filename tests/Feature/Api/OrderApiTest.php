@@ -45,7 +45,7 @@ class OrderApiTest extends TestCase
         $response->assertCreated()
             ->assertJson([
                 'data' => [
-                    'total_price' => 200,
+                    'total' => 200,
                     'status' => 'pending'
                 ]
             ]);

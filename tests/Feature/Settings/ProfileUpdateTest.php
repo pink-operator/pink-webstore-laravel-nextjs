@@ -1,77 +1,67 @@
 <?php
 
+namespace Tests\Feature\Settings;
+
 use App\Models\User;
-use Livewire\Volt\Volt;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Tests\Helpers\TestHelper;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+// Use RefreshDatabase trait
+uses(RefreshDatabase::class);
 
-test('profile page is displayed', function () {
-    $this->actingAs($user = User::factory()->create());
-
-    $this->get('/settings/profile')->assertOk();
+// Setup for tests
+beforeEach(function () {
+    TestHelper::disableAllRateLimiting();
 });
 
 test('profile information can be updated', function () {
     $user = User::factory()->create();
 
-    $this->actingAs($user);
+    $response = $this->actingAs($user)
+        ->putJson('/api/auth/profile', [
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+        ]);
 
-    $response = Volt::test('settings.profile')
-        ->set('name', 'Test User')
-        ->set('email', 'test@example.com')
-        ->call('updateProfileInformation');
-
-    $response->assertHasNoErrors();
-
-    $user->refresh();
-
-    expect($user->name)->toEqual('Test User');
-    expect($user->email)->toEqual('test@example.com');
-    expect($user->email_verified_at)->toBeNull();
+    $response->assertOk()
+        ->assertJsonPath('data.name', 'Test User')
+        ->assertJsonPath('data.email', 'test@example.com');
 });
 
-test('email verification status is unchanged when email address is unchanged', function () {
+test('email verification status is unchanged when email is unchanged', function () {
     $user = User::factory()->create();
 
-    $this->actingAs($user);
+    $response = $this->actingAs($user)
+        ->putJson('/api/auth/profile', [
+            'name' => 'Test User',
+            'email' => $user->email,
+        ]);
 
-    $response = Volt::test('settings.profile')
-        ->set('name', 'Test User')
-        ->set('email', $user->email)
-        ->call('updateProfileInformation');
-
-    $response->assertHasNoErrors();
-
-    expect($user->refresh()->email_verified_at)->not->toBeNull();
+    $response->assertOk();
+    expect($user->fresh()->email_verified_at)->not->toBeNull();
 });
 
 test('user can delete their account', function () {
     $user = User::factory()->create();
 
-    $this->actingAs($user);
+    $response = $this->actingAs($user)
+        ->deleteJson('/api/auth/profile', [
+            'password' => 'password',
+        ]);
 
-    $response = Volt::test('settings.delete-user-form')
-        ->set('password', 'password')
-        ->call('deleteUser');
-
-    $response
-        ->assertHasNoErrors()
-        ->assertRedirect('/');
-
+    $response->assertOk();
     expect($user->fresh())->toBeNull();
-    expect(auth()->check())->toBeFalse();
 });
 
 test('correct password must be provided to delete account', function () {
     $user = User::factory()->create();
 
-    $this->actingAs($user);
+    $response = $this->actingAs($user)
+        ->deleteJson('/api/auth/profile', [
+            'password' => 'wrong-password',
+        ]);
 
-    $response = Volt::test('settings.delete-user-form')
-        ->set('password', 'wrong-password')
-        ->call('deleteUser');
-
-    $response->assertHasErrors(['password']);
-
+    $response->assertStatus(422);
     expect($user->fresh())->not->toBeNull();
 });

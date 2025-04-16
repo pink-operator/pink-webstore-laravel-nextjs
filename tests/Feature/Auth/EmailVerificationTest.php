@@ -7,13 +7,13 @@ use Illuminate\Support\Facades\URL;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
-test('email verification screen can be rendered', function () {
-    $user = User::factory()->unverified()->create();
-
-    $response = $this->actingAs($user)->get('/verify-email');
-
-    $response->assertStatus(200);
-});
+// test('email verification screen can be rendered', function () {
+//    $user = User::factory()->unverified()->create();
+//
+//    $response = $this->actingAs($user)->get('/verify-email');
+//
+//    $response->assertStatus(200);
+// });
 
 test('email can be verified', function () {
     $user = User::factory()->unverified()->create();

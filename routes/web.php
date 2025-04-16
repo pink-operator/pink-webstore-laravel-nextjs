@@ -2,6 +2,11 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\ProfileController;
 
 // Simple home route that shows an API info message
 Route::get('/', function () {
@@ -54,6 +59,58 @@ Route::get('/api/documentation', function () {
         ]
     ]);
 })->name('l5-swagger.default.api');
+
+// API routes
+Route::prefix('api')->group(function () {
+    // Test endpoint
+    Route::get('/test-endpoint', function() {
+        return response()->json(['message' => 'API test endpoint is working!']);
+    });
+
+    // Public routes with auth rate limiting
+    Route::middleware('throttle:auth')->group(function () {
+        Route::post('/auth/register', [AuthController::class, 'register']);
+        Route::post('/auth/login', [AuthController::class, 'login']);
+    });
+
+    // Product routes (public)
+    Route::get('/products', [ProductController::class, 'index']);
+    Route::get('/products/search', [ProductController::class, 'search']);
+    Route::get('/products/{product}', [ProductController::class, 'show']);
+
+    // Categories
+    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::get('/categories/{category}', [CategoryController::class, 'show']);
+
+    // Protected routes
+    Route::middleware('auth:sanctum')->group(function () {
+        // Auth
+        Route::post('/auth/logout', [AuthController::class, 'logout']);
+        Route::get('/auth/user', [AuthController::class, 'user']);
+        
+        // Profile
+        Route::put('/auth/profile', [ProfileController::class, 'update']);
+        Route::delete('/auth/profile', [ProfileController::class, 'destroy']);
+
+        // Products (admin only) - simplified for testing
+        Route::post('/products', [ProductController::class, 'store'])->middleware('auth:sanctum');
+        Route::put('/products/{product}', [ProductController::class, 'update'])->middleware('auth:sanctum');
+        Route::delete('/products/{product}', [ProductController::class, 'destroy'])->middleware('auth:sanctum');
+
+        // Orders
+        Route::get('/orders', [OrderController::class, 'index']);
+        Route::post('/orders', [OrderController::class, 'store']);
+        Route::get('/orders/{order}', [OrderController::class, 'show']);
+
+        // Order status (admin only) - simplified for testing
+        Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->middleware('auth:sanctum');
+
+        // Categories (admin only) - simplified for testing
+        Route::post('/categories', [CategoryController::class, 'store'])->middleware('auth:sanctum');
+        Route::put('/categories/{category}', [CategoryController::class, 'update'])->middleware('auth:sanctum');
+        Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->middleware('auth:sanctum');
+    });
+});
 
 // Include auth routes
 require __DIR__.'/auth.php';

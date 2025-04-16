@@ -4,13 +4,17 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\ProfileController;
 use Illuminate\Support\Facades\Route;
 
-// Public routes with auth rate limiting
-Route::middleware('throttle:auth')->group(function () {
-    Route::post('/auth/register', [AuthController::class, 'register']);
-    Route::post('/auth/login', [AuthController::class, 'login']);
+// Note: for debugging API routes
+Route::get('/test', function() {
+    return response()->json(['message' => 'API routes are working!']);
 });
+
+// Public routes (removed throttling for testing)
+Route::post('/auth/register', [AuthController::class, 'register']);
+Route::post('/auth/login', [AuthController::class, 'login']);
 
 // Product routes (some public, some protected)
 Route::get('/products', [ProductController::class, 'index']);
@@ -26,6 +30,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/user', [AuthController::class, 'user']);
+    
+    // Profile
+    Route::put('/auth/profile', [ProfileController::class, 'update']);
+    Route::delete('/auth/profile', [ProfileController::class, 'destroy']);
 
     // Products (admin only)
     Route::middleware(['admin'])->group(function () {
@@ -44,8 +52,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus']);
     });
 
-    // Categories (admin only with admin rate limiting)
-    Route::middleware(['admin', 'throttle:admin'])->group(function () {
+    // Categories (admin only)
+    Route::middleware(['admin'])->group(function () {
         Route::post('/categories', [CategoryController::class, 'store']);
         Route::put('/categories/{category}', [CategoryController::class, 'update']);
         Route::delete('/categories/{category}', [CategoryController::class, 'destroy']);

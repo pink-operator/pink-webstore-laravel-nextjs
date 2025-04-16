@@ -16,4 +16,19 @@ class OrderPolicy
     {
         return $user->isAdmin();
     }
+
+    public function delete(User $user, Order $order): bool
+    {
+        return $user->isAdmin();
+    }
+
+    public function restore(User $user, Order $order): bool
+    {
+        return $user->isAdmin();
+    }
+
+    public function forceDelete(User $user, Order $order): bool
+    {
+        return $user->isAdmin();
+    }
 }

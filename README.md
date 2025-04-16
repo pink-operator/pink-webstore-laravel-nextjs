@@ -16,6 +16,7 @@ A Laravel-based RESTful API for an e-commerce platform with product management, 
 - got to /frontend inside the project root: **npm run dev** - should start at http://localhost:3000
 - run migrations: **php artisan migrate**
 - run seeders: **php artisan db:seed **
+- the .env.example is the exact same as my own
 
 ## Project Structure
 
@@ -129,3 +130,5 @@ php artisan l5-swagger:generate
 ```
 
 The documentation will be generated in the `storage/api-docs` directory.
+
+we are using postgresql, and php artisan (no brew)

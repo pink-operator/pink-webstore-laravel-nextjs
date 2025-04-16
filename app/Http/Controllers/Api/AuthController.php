@@ -122,7 +122,11 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        // Check if the token is a real token (not a TransientToken used in tests)
+        if (method_exists($request->user()->currentAccessToken(), 'delete')) {
+            $request->user()->currentAccessToken()->delete();
+        }
+        
         return response()->json(['message' => 'Successfully logged out']);
     }
 

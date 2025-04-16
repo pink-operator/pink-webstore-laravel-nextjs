@@ -83,48 +83,57 @@ class OrderController extends Controller
      */
     public function store(StoreOrderRequest $request)
     {
-        try {
-            return DB::transaction(function () use ($request) {
-                $total_price = 0;
-                $items = collect($request->validated('items'))->map(function ($item) use (&$total_price) {
-                    $product = Product::findOrFail($item['product_id']);
+        $orderData = [];
+        $total = 0;
 
-                    if (!$product->hasEnoughStock($item['quantity'])) {
-                        throw new \Exception("Insufficient stock for product: {$product->name}");
-                    }
+        // Validate products and calculate total
+        foreach ($request->items as $index => $item) {
+            $product = Product::findOrFail($item['product_id']);
+            
+            if ($product->stock_quantity < $item['quantity']) {
+                return response()->json([
+                    'message' => 'Insufficient stock for product: ' . $product->name,
+                    'errors' => [
+                        'items.0.quantity' => ['Quantity exceeds available stock']
+                    ]
+                ], 422);
+            }
 
-                    $item_price = $product->price * $item['quantity'];
-                    $total_price += $item_price;
-
-                    return [
-                        'product_id' => $product->id,
-                        'quantity' => $item['quantity'],
-                        'price' => $product->price,
-                    ];
-                });
-
-                $order = Order::create([
-                    'user_id' => $request->user()->id,
-                    'total_price' => $total_price,
-                    'status' => 'pending',
-                ]);
-
-                $order->items()->createMany($items);
-
-                // Update stock quantities
-                foreach ($items as $item) {
-                    Product::where('id', $item['product_id'])
-                        ->decrement('stock_quantity', $item['quantity']);
-                }
-
-                return new OrderResource($order->load('items.product'));
-            });
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-                'errors' => ['general' => [$e->getMessage()]]
-            ], 422);
+            $total += $product->price * $item['quantity'];
+            $orderData[] = [
+                'product_id' => $product->id,
+                'quantity' => $item['quantity'],
+                'price' => $product->price
+            ];
         }
+
+        DB::beginTransaction();
+        try {
+            $order = Order::create([
+                'user_id' => $request->user()->id,
+                'total_price' => $total,
+                'status' => 'pending'
+            ]);
+
+            // Create order items and update stock
+            foreach ($request->items as $item) {
+                $product = Product::find($item['product_id']);
+                $order->items()->create([
+                    'product_id' => $item['product_id'],
+                    'quantity' => $item['quantity'],
+                    'price' => $product->price
+                ]);
+                
+                $product->decrement('stock_quantity', $item['quantity']);
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+
+        return new OrderResource($order->load('items.product'));
     }
 
     /**
@@ -155,9 +164,13 @@ class OrderController extends Controller
      *     )
      * )
      */
-    public function show(Order $order)
+    public function show(Request $request, Order $order)
     {
-        $this->authorize('view', $order);
+        // Check if user can view this order (admin can view any order, customers only their own)
+        if (!$request->user()->isAdmin() && $order->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized access to order'], 403);
+        }
+        
         return new OrderResource($order->load('items.product', 'user'));
     }
 
@@ -202,7 +215,10 @@ class OrderController extends Controller
      */
     public function updateStatus(Request $request, Order $order)
     {
-        $this->authorize('update', $order);
+        // Only admin users can update order status
+        if (!$request->user()->isAdmin()) {
+            return response()->json(['message' => 'Unauthorized - Admin access required'], 403);
+        }
 
         $validated = $request->validate([
             'status' => ['required', 'in:pending,processing,completed,cancelled'],

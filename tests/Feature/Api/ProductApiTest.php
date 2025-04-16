@@ -4,6 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\User;
 use App\Models\Product;
+use App\Models\Category;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -113,6 +114,140 @@ class ProductApiTest extends TestCase
             ->deleteJson("/api/products/{$product->id}");
 
         $response->assertNoContent();
-        $this->assertDatabaseMissing('products', ['id' => $product->id]);
+        $this->assertSoftDeleted('products', ['id' => $product->id]);
+    }
+
+    public function test_products_are_paginated()
+    {
+        Product::factory(15)->create();
+
+        $response = $this->getJson('/api/products?page=1&per_page=10');
+
+        $response->assertOk()
+            ->assertJsonCount(10, 'data')
+            ->assertJsonStructure([
+                'data',
+                'meta' => [
+                    'current_page',
+                    'last_page',
+                    'per_page',
+                    'total'
+                ]
+            ]);
+
+        $this->assertEquals(15, $response->json('meta.total'));
+    }
+
+    public function test_products_can_be_sorted()
+    {
+        Product::factory()->create(['price' => 100]);
+        Product::factory()->create(['price' => 50]);
+        Product::factory()->create(['price' => 75]);
+
+        $response = $this->getJson('/api/products?sort=price&direction=asc');
+
+        $response->assertOk();
+        $this->assertEquals(50, $response->json('data.0.price'));
+        $this->assertEquals(100, $response->json('data.2.price'));
+    }
+
+    public function test_product_creation_validates_required_fields()
+    {
+        $response = $this->actingAs($this->admin)
+            ->postJson('/api/products', []);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['name', 'description', 'price', 'stock_quantity']);
+    }
+
+    public function test_product_creation_validates_price_format()
+    {
+        $response = $this->actingAs($this->admin)
+            ->postJson('/api/products', [
+                'name' => 'Test Product',
+                'description' => 'Description',
+                'price' => 'invalid',
+                'stock_quantity' => 10
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['price']);
+    }
+
+    public function test_can_filter_products_by_price_range()
+    {
+        Product::factory()->create(['price' => 25]);
+        Product::factory()->create(['price' => 50]);
+        Product::factory()->create(['price' => 75]);
+        Product::factory()->create(['price' => 100]);
+
+        $response = $this->getJson('/api/products?min_price=40&max_price=80');
+
+        $response->assertOk()
+            ->assertJsonCount(2, 'data');
+    }
+
+    public function test_can_filter_products_by_stock_availability()
+    {
+        Product::factory()->create(['stock_quantity' => 0]);
+        Product::factory()->create(['stock_quantity' => 5]);
+
+        $response = $this->getJson('/api/products?in_stock=true');
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'data');
+    }
+
+    public function test_cannot_update_nonexistent_product()
+    {
+        $response = $this->actingAs($this->admin)
+            ->putJson("/api/products/99999", ['name' => 'Updated Name']);
+
+        $response->assertNotFound();
+    }
+
+    public function test_cannot_create_product_with_duplicate_name()
+    {
+        Product::factory()->create(['name' => 'Existing Product']);
+
+        $response = $this->actingAs($this->admin)
+            ->postJson('/api/products', [
+                'name' => 'Existing Product',
+                'description' => 'Description',
+                'price' => 99.99,
+                'stock_quantity' => 10
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['name']);
+    }
+
+    public function test_can_filter_products_by_category()
+    {
+        $category = Category::factory()->create();
+        $product = Product::factory()->create();
+        $product->categories()->attach($category);
+        
+        Product::factory()->create(); // Product without category
+
+        $response = $this->getJson("/api/products?category={$category->id}");
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'data');
+    }
+
+    public function test_product_soft_delete()
+    {
+        $product = Product::factory()->create();
+
+        $this->actingAs($this->admin)
+            ->deleteJson("/api/products/{$product->id}");
+
+        $this->assertSoftDeleted('products', ['id' => $product->id]);
+        
+        // Verify it doesn't show up in the listing
+        $response = $this->getJson('/api/products');
+        $response->assertOk()
+            ->assertJsonCount(0, 'data');
     }
 }

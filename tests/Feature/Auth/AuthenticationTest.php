@@ -1,50 +1,50 @@
 <?php
 
+namespace Tests\Feature\Auth;
+
 use App\Models\User;
-use Livewire\Volt\Volt as LivewireVolt;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+use Tests\Helpers\TestSetup;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+class AuthenticationTest extends TestCase
+{
+    use RefreshDatabase, TestSetup;
 
-test('login screen can be rendered', function () {
-    $response = $this->get('/login');
+    public function test_users_can_authenticate()
+    {
+        $user = User::factory()->create();
 
-    $response->assertStatus(200);
-});
+        $response = $this->postJson('/api/auth/login', [
+            'email' => $user->email,
+            'password' => 'password'
+        ]);
 
-test('users can authenticate using the login screen', function () {
-    $user = User::factory()->create();
+        $response->assertOk()
+            ->assertJsonStructure(['token', 'user']);
+    }
 
-    $response = LivewireVolt::test('auth.login')
-        ->set('email', $user->email)
-        ->set('password', 'password')
-        ->call('login');
+    public function test_users_cannot_authenticate_with_invalid_password()
+    {
+        $user = User::factory()->create();
 
-    $response
-        ->assertHasNoErrors()
-        ->assertRedirect(route('dashboard', absolute: false));
+        $response = $this->postJson('/api/auth/login', [
+            'email' => $user->email,
+            'password' => 'wrong-password'
+        ]);
 
-    $this->assertAuthenticated();
-});
+        $response->assertStatus(422);
+    }
 
-test('users can not authenticate with invalid password', function () {
-    $user = User::factory()->create();
+    public function test_users_can_logout()
+    {
+        $user = User::factory()->create();
 
-    $response = LivewireVolt::test('auth.login')
-        ->set('email', $user->email)
-        ->set('password', 'wrong-password')
-        ->call('login');
+        $this->actingAs($user);
 
-    $response->assertHasErrors('email');
+        $response = $this->postJson('/api/auth/logout');
 
-    $this->assertGuest();
-});
-
-test('users can logout', function () {
-    $user = User::factory()->create();
-
-    $response = $this->actingAs($user)->post('/logout');
-
-    $response->assertRedirect('/');
-
-    $this->assertGuest();
-});
+        $response->assertStatus(200)
+            ->assertJson(['message' => 'Successfully logged out']);
+    }
+}
