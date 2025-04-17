@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\VerificationController;
+use App\Http\Controllers\Api\PasswordResetController;
 use Illuminate\Support\Facades\Route;
 
 // Note: for debugging API routes
@@ -15,6 +17,19 @@ Route::get('/test', function() {
 // Public routes (removed throttling for testing)
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
+
+// Email verification routes - make verify endpoint accessible without auth
+Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])
+    ->name('verification.verify');
+
+// Password reset routes - simplified to ensure they get registered
+Route::post('/auth/forgot-password', function (\Illuminate\Http\Request $request) {
+    return app(PasswordResetController::class)->forgotPassword($request);
+});
+
+Route::post('/auth/reset-password', function (\Illuminate\Http\Request $request) {
+    return app(PasswordResetController::class)->resetPassword($request);
+})->name('password.reset');
 
 // Product routes (some public, some protected)
 Route::get('/products', [ProductController::class, 'index']);
@@ -30,6 +45,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/user', [AuthController::class, 'user']);
+    
+    // Email verification resend route - make sure this is defined correctly
+    Route::post('/auth/email/verification-notification', [VerificationController::class, 'resend'])
+        ->middleware('throttle:6,1');
     
     // Profile
     Route::put('/auth/profile', [ProfileController::class, 'update']);

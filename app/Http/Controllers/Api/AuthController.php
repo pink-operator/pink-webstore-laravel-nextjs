@@ -52,6 +52,9 @@ class AuthController extends Controller
             'role' => 'customer',
         ]);
 
+        // Send the email verification notification
+        $user->sendEmailVerificationNotification();
+
         return response()->json([
             'token' => $user->createToken('auth-token')->plainTextToken,
             'user' => new UserResource($user),

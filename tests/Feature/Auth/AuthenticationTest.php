@@ -47,4 +47,24 @@ class AuthenticationTest extends TestCase
         $response->assertStatus(200)
             ->assertJson(['message' => 'Successfully logged out']);
     }
+
+    public function test_users_can_get_their_info()
+    {
+        $user = User::factory()->create();
+        
+        $response = $this->actingAs($user)
+            ->getJson('/api/auth/user');
+        
+        $response->assertOk()
+            ->assertJsonPath('data.id', $user->id)
+            ->assertJsonPath('data.name', $user->name)
+            ->assertJsonPath('data.email', $user->email);
+    }
+
+    public function test_unauthenticated_users_cannot_get_user_info()
+    {
+        $response = $this->getJson('/api/auth/user');
+        
+        $response->assertStatus(401);
+    }
 }

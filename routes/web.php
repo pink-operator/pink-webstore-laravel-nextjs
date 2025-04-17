@@ -112,5 +112,10 @@ Route::prefix('api')->group(function () {
     });
 });
 
+// Named route for password reset
+Route::get('/reset-password/{token}', function () {
+    return view('welcome');
+})->name('password.reset');
+
 // Include auth routes
 require __DIR__.'/auth.php';
