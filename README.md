@@ -14,7 +14,7 @@ The API documentation is available through Swagger UI at:
 - Run migrations: **php artisan migrate**
 - Run seeders: **php artisan db:seed**
 - The .env.example is the exact same as my own
-- Run the 95 tests (491 assertions) on all the endpoints: **php artisan test**
+- Run the 106 tests (519 assertions) on all the endpoints: **php artisan test**
 - Another way to list routes: **php artisan route:list**
 
 ## Project Structure
@@ -23,45 +23,45 @@ The API documentation is available through Swagger UI at:
 
 #### Authentication
 - `AuthController` - Handles user registration, login, logout and user info
-  - POST `/api/auth/register` - Register new user (creates account and sends verification email)
-  - POST `/api/auth/login` - User login (returns auth token for API access)
-  - POST `/api/auth/logout` - User logout (invalidates current token)
-  - GET `/api/auth/user` - Get authenticated user info (requires valid token)
+  - POST `/api/auth/register` - Register new user (creates account and sends verification email) - 2 tests, 5 assertions
+  - POST `/api/auth/login` - User login (returns auth token for API access) - 2 tests, 4 assertions
+  - POST `/api/auth/logout` - User logout (invalidates current token) - 1 test, 2 assertions
+  - GET `/api/auth/user` - Get authenticated user info (requires valid token) - 2 tests, 3 assertions
 - `PasswordResetController` - Manages password reset functionality
-  - POST `/api/auth/forgot-password` - Request password reset link (emails reset token to user)
-  - POST `/api/auth/reset-password` - Reset password with token (validates token and updates password)
+  - POST `/api/auth/forgot-password` - Request password reset link (emails reset token to user) - 2 tests, 2 assertions
+  - POST `/api/auth/reset-password` - Reset password with token (validates token and updates password) - 3 tests, 4 assertions
 - `VerificationController` - Handles email verification
-  - GET `/api/email/verify/{id}/{hash}` - Verify user's email address
-  - POST `/api/auth/email/verification-notification` - Resend verification email
+  - GET `/api/email/verify/{id}/{hash}` - Verify user's email address - 2 tests, 3 assertions
+  - POST `/api/auth/email/verification-notification` - Resend verification email - 1 test, 2 assertions
 
 #### Profile Management
 - `ProfileController` - Manages user profile data
-  - PUT `/api/auth/profile` - Update user profile information
-  - DELETE `/api/auth/profile` - Delete user account
+  - PUT `/api/auth/profile` - Update user profile information - 3 tests, 5 assertions
+  - DELETE `/api/auth/profile` - Delete user account - 2 tests, 3 assertions
 
 #### Products
 - `ProductController` - Manages product catalog
-  - GET `/api/products` - List products with filters (public, supports pagination and category filtering)
-  - GET `/api/products/search` - Search for products by name or description
-  - GET `/api/products/{id}` - Get single product details (public)
-  - POST `/api/products` - Create product (admin only, includes validation)
-  - PUT `/api/products/{id}` - Update product (admin only, includes validation)
-  - DELETE `/api/products/{id}` - Delete product (admin only, handles relationships)
+  - GET `/api/products` - List products with filters (public, supports pagination and category filtering) - 4 tests, 8 assertions
+  - GET `/api/products/search` - Search for products by name or description - 1 test, 3 assertions
+  - GET `/api/products/{id}` - Get single product details (public) - 2 tests, 3 assertions
+  - POST `/api/products` - Create product (admin only, includes validation) - 5 tests, 12 assertions
+  - PUT `/api/products/{id}` - Update product (admin only, includes validation) - 4 tests, 8 assertions
+  - DELETE `/api/products/{id}` - Delete product (admin only, handles relationships) - 2 tests, 4 assertions
 
 #### Orders
 - `OrderController` - Handles order processing
-  - GET `/api/orders` - List orders (all for admin, own for customers)
-  - POST `/api/orders` - Create new order (validates product availability and calculates totals)
-  - GET `/api/orders/{id}` - Get order details (includes items and status)
-  - PATCH `/api/orders/{id}/status` - Update order status (admin only, includes status validation)
+  - GET `/api/orders` - List orders (all for admin, own for customers) - 3 tests, 6 assertions
+  - POST `/api/orders` - Create new order (validates product availability and calculates totals) - 5 tests, 10 assertions
+  - GET `/api/orders/{id}` - Get order details (includes items and status) - 3 tests, 5 assertions
+  - PATCH `/api/orders/{id}/status` - Update order status (admin only, includes status validation) - 3 tests, 6 assertions
 
 #### Categories
 - `CategoryController` - Manages product categories
-  - GET `/api/categories` - List all categories (public)
-  - GET `/api/categories/{id}` - Get category details with associated products
-  - POST `/api/categories` - Create category (admin only)
-  - PUT `/api/categories/{id}` - Update category (admin only)
-  - DELETE `/api/categories/{id}` - Delete category (admin only, handles product relationships)
+  - GET `/api/categories` - List all categories (public) - 1 test, 3 assertions
+  - GET `/api/categories/{id}` - Get category details with associated products - 3 tests, 5 assertions
+  - POST `/api/categories` - Create category (admin only) - 3 tests, 7 assertions
+  - PUT `/api/categories/{id}` - Update category (admin only) - 4 tests, 6 assertions
+  - DELETE `/api/categories/{id}` - Delete category (admin only, handles product relationships) - 3 tests, 5 assertions
 
 ### Main Workflows
 
