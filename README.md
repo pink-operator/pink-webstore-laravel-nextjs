@@ -14,7 +14,7 @@ The API documentation is available through Swagger UI at:
 - Run migrations: **php artisan migrate**
 - Run seeders: **php artisan db:seed**
 - The .env.example is the exact same as my own
-- Run the 106 tests (519 assertions) on all the endpoints: **php artisan test**
+- Run the 73 tests (384 assertions) on all the endpoints: **php artisan test**
 - Another way to list routes: **php artisan route:list**
 
 ## Project Structure
